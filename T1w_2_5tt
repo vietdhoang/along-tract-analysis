@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Viet Hoang
+# July 15, 2019
+
+
+#################################################################################
+
+# This script creates a 5 tissue type image (5tt), which contains 5 segmented 
+# images belonging to a T1w image. The five tissues (indexed 0-4) 
+# are cortical GM, sub-cortical GM, WM, CSF, and pathological tissue (optional)
+
+# A brain extracted T1w image is required. We outline the steps:
+#   1. Generate the 5tt mask image using the inputed T1w image using 5tt2gmwmi
+#   2. Check to make sure that the 5tt images conform to the expected ACT
+#      5tt format using 5tt check
+
+# Usage:
+# T1w_2_5tt <input> <output>
+# Example:
+# T1w_2_5tt PATH/to/T1w PATH/to/output/image
+
+##################################################################################
+
+
+# Reads the arguments that are passed into the script.
+file_t1w=$1
+file_out=$2
+
+# 1. Generate the 5tt mask image using the inputed T1w image using 5ttgen
+5ttgen fsl $file_t1w $file_out -premasked
+
+# 2. Check to make sure that the 5tt images conform to the expected ACT 5tt 
+# format using 5tt check
+5ttcheck -info $file_out

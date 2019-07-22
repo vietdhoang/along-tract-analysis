@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Viet Hoang
+# July 12, 2019
+
+
+#################################################################################
+
+# This script performs Anatomically-Constrained Tractography developed by MRtrix.
+
+# The DWI (with bval and bvec files), DWI_b0 and 5tt images are required. We 
+# outline the steps below:
+#   1. Convert the DWI into an uncompressed format. According to the MRtrix
+#      documentation, this speeds up processing. 
+#   2. Estimate the multi-shell, multi-tissue response function
+#   3. Create an FOD image using multi-shell, multi-tissue constrained 
+#      spherical deconvolution (MSMT-CSD)
+#   4. Generate an initial tractogram using ACT
+
+# Example usage:
+# ACT -i PATH/to/DWI -t PATH/to/5tt -b PATH/to/b0 -o PATH/to/output/tractogram
+
+#################################################################################
+
+
+# Reads the arguments that are passed into the script and creates an output dir.
+# We use the built-in getops function and assign the path of the file to the 
+# appropriate variable based on the flag. -i is the flag for the DWI, -t is 
+# for the 5tt image, and -o is for the output tractogram
+while getopts 'b:i:t:o:' flag; do 
+    case "${flag}" in
+        b) file_b0="${OPTARG}";;
+        i) file_dwi="${OPTARG}";;
+        t) file_5tt="${OPTARG}";;
+        o) file_out="${OPTARG}";;
+    esac
+
+done
+
+parent="$(dirname "$file_dwi")"
+mkdir -p $parent/Tractography_Output_tmp
+output_dir=$parent/Tractography_Output_tmp
+
+# bvec and bval files must be in the same directory as DWI and be the only files
+# of that type present (i.e 2 bvec files are not allowed)
+file_bval="$(find $parent -name '*.bval' -type f )"
+file_bvec="$(find $parent -name '*.bvec' -type f )"
+
+# 1. Convert the DWI into an uncompressed format.
+mrconvert -fslgrad $file_bvec $file_bval -datatype float32 -strides 0,0,0,1 \
+$file_dwi $output_dir/DWI.mif
+
+# 2. Estimate the multi-shell, multi-tissue response function
+dwi2response msmt_5tt $output_dir/DWI.mif $file_5tt \
+$output_dir/RF_WM.txt $output_dir/RF_GM.txt $output_dir/RF_CSF.txt \
+-voxels $output_dir/RF_voxels.mif
+
+# 3. Create an FOD image using multi-shell, multi-tissue constrained spherical 
+# deconvolution (MSMT-CSD)
+dwi2fod msmt_csd -mask $file_b0 \
+$output_dir/DWI.mif \
+$output_dir/RF_WM.txt $output_dir/WM_FODs.mif \
+$output_dir/RF_GM.txt $output_dir/GM.mif \
+$output_dir/RF_CSF.txt $output_dir/CSF.mif \
+
+# 3a. View the FOD image
+mrconvert $output_dir/WM_FODs.mif - -coord 3 0 | \
+mrcat $output_dir/CSF.mif $output_dir/GM.mif - $output_dir/tissueRGB.mif -axis 3
+mrview $output_dir/tissueRGB.mif -odf.load_sh $output_dir/WM_FODs.mif
+
+# 4. Generate initial tractogram using ACT
+tckgen $output_dir/WM_FODs.mif $file_out \
+-act $file_5tt \
+-backtrack -crop_at_gmwmi -seed_dynamic $output_dir/WM_FODs.mif \
+-maxlength 250 -select 20M -cutoff 0.06
