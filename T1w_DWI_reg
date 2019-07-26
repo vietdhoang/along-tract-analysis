@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Viet Hoang
+# July 4, 2019
+
+#Read user input and create output directory
+
+read -p "T1w image file path: " -e file_t1w
+read -p "DWI image file path: " -e file_dwi
+parent="$(dirname "$file_t1w")"
+
+mkdir -p $parent/T1w_Registration_Output
+output_dir=$parent/T1w_Registration_Output
+
+
+# Register DWI to T1w so that DWI is the same resolution (0.7 x 0.7x 0.7mm)
+flirt -dof 6 -cost mutualinfo \
+-in $file_dwi -ref $file_t1w \
+-out $output_dir/DWI_registered_tmp.nii.gz
+
+
+# Create binary brain mask from DWI extracted. -m option creates brain mask, -n does not generated segmented brain output
+bet $output_dir/DWI_registered_tmp.nii.gz $output_dir/DWI_brain_tmp.nii.gz -m -n
+
+
+# Apply binary DWI brain mask to T1w image
+fslmaths $file_t1w -mas $output_dir/DWI_brain_tmp_mask.nii.gz $output_dir/T1w_extracted.nii.gz
+
+# Unzip extracted T1w image for WM segmentation with SPM12
+gunzip $output_dir/T1w_extracted.nii.gz
+
+# Register extracted T1w image to DWI image and output matrix
+flirt -dof 6 -cost mutualinfo \
+-in $output_dir/T1w_extracted.nii -ref $file_dwi \
+-out $output_dir/T1w_extracted_reg.nii.gz -omat $output_dir/T1w_extracted_reg.mat
+
+# Delete tmp files
+cd $output_dir
+rm DWI_registered_tmp.nii.gz DWI_brain_tmp_mask.nii.gz
