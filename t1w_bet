@@ -13,8 +13,8 @@
 # b=0 DWI (brain extracted) and T1w images are required. We outline the steps 
 # brain extraction:
 #   1. Register DWI_b0 to T1w so that the brains are roughly aligned and have the 
-#      same resolution
-#   2. Create binary brain mask from the registered DWI.
+#      same resolution. We obtain only the transformation matrix
+#   2. Use the matrix to transform the brain mask into DTI space.
 #   3. Dilate the brain mask (optional)
 #   4. Apply brain mask to T1w image
 
@@ -25,11 +25,12 @@
 
 #Read user input and create tmp directory
 
-while getopts "d:i:r:" flag; do 
+while getopts "d:i:r:m:" flag; do 
     case ${flag} in
         d) npass_val=${OPTARG};;
         i) file_t1w=${OPTARG};;
-        r) file_b0=${OPTARG};;                
+        r) file_b0=${OPTARG};;
+        m) file_b0_mask=${OPTARG};;                
     esac
 done
 
@@ -43,12 +44,14 @@ tmp_dir=$parent/${t1w_name}_t1w_bet_tmp
 # same resolution
 flirt -dof 6 -cost mutualinfo \
 -in $file_b0 -ref $file_t1w \
--out $tmp_dir/DWI_registered_tmp.nii.gz
-
+-omat $tmp_dir/DWI_registered_tmp.mat
 
 # Create binary brain mask from DWI extracted. -m option creates brain mask, 
 # -n does not generated segmented brain output
-bet $tmp_dir/DWI_registered_tmp.nii.gz $tmp_dir/DWI_brain_tmp.nii.gz -m -n
+flirt -in $file_b0_mask \
+-ref $file_t1w \
+-applyxfm -init $tmp_dir/DWI_registered_tmp.mat \
+-out $tmp_dir/DWI_brain_tmp_mask.nii.gz
 
 # Dilate the brain mask using MRtrix to include the skull
 maskfilter -npass $npass_val \
