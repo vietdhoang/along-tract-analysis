@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+# Viet Hoang
+# July 4, 2019
+
+
+#################################################################################
+
+# This script extracts the brain from a given MP2RAGE UNII T1 weighted image.
+# FSL's BET cannot be used for these images as the noisy background interferes
+# with brain extraction.
+
+# b=0 DWI (brain extracted) and T1w images are required. We outline the steps 
+# brain extraction:
+#   1. Register DWI_b0 to T1w so that the brains are roughly aligned and have the 
+#      same resolution
+#   2. Create binary brain mask from the registered DWI.
+#   3. Dilate the brain mask (optional)
+#   4. Apply brain mask to T1w image
+
+# Example usage:
+# t1w_bet -d npass_val -i PATH/to/T1w -r PATH/to/DWI_b0 
+
+################################################################################
+
+#Read user input and create tmp directory
+
+while getopts "d:i:r:" flag; do 
+    case ${flag} in
+        d) npass_val=${OPTARG};;
+        i) file_t1w=${OPTARG};;
+        r) file_b0=${OPTARG};;                
+    esac
+done
+
+parent="$(dirname "$file_t1w")"
+t1w_name="$(basename ${file_t1w%.nii*})"
+mkdir -p $parent/${t1w_name}_t1w_bet_tmp
+tmp_dir=$parent/${t1w_name}_t1w_bet_tmp
+
+
+# 1. Register DWI_b0 to T1w so that the brains are roughly aligned and have the 
+# same resolution
+flirt -dof 6 -cost mutualinfo \
+-in $file_b0 -ref $file_t1w \
+-out $tmp_dir/DWI_registered_tmp.nii.gz
+
+
+# Create binary brain mask from DWI extracted. -m option creates brain mask, 
+# -n does not generated segmented brain output
+bet $tmp_dir/DWI_registered_tmp.nii.gz $tmp_dir/DWI_brain_tmp.nii.gz -m -n
+
+# Dilate the brain mask using MRtrix to include the skull
+maskfilter -npass $npass_val \
+$tmp_dir/DWI_brain_tmp_mask.nii.gz dilate \
+$tmp_dir/DWI_brain_tmp_mask_dilate.nii.gz
+
+# Apply binary DWI brain mask to T1w image
+fslmaths $file_t1w -mas $tmp_dir/DWI_brain_tmp_mask_dilate.nii.gz \
+$parent/${t1w_name}_noskull_dil_${npass_val}.nii.gz
+
+# Remove tmp folder
+rm -r $tmp_dir
