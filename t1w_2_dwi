@@ -28,12 +28,14 @@
 while getopts "i:r:o:" flag; do 
     case ${flag} in
         i) file_t1w=${OPTARG};;
+        o) file_t1w_orig=${OPTARG};;
         r) file_b0=${OPTARG};;
     esac
 done
 
 parent="$(dirname "$file_t1w")"
 t1w_name="$(basename ${file_t1w%.nii*})"
+t1w_orig_name="$(basename ${file_t1w_orig%.nii*})"
 mkdir -p $parent/${t1w_name}_T1w_2_DWI_tmp
 tmp_dir=$parent/${t1w_name}_T1w_2_DWI_tmp
 
@@ -48,10 +50,15 @@ transformconvert -quiet \
 $tmp_dir/DWI_b0_reg_2_T1w_tmp.mat $file_b0 $file_t1w flirt_import \
 $tmp_dir/DWI_b0_reg_2_T1w_tmp.txt
 
-# 3. Apply the inverse of the DWI_b0_reg_2_T1w matrix to obtain T1w_reg_2_DWI
+# 3. Apply the inverse of the DWI_b0_reg_2_T1w matrix to obtain T1w_DTIsp
 mrtransform $file_t1w \
 -inverse -linear $tmp_dir/DWI_b0_reg_2_T1w_tmp.txt \
 $parent/${t1w_name}_DTIsp.nii.gz
+
+# 4. Apply the inverse of the DWI_b0_reg_2_T1w matrix to obtain T1w_orig_DTIsp
+mrtransform $file_t1w_orig \
+-inverse -linear $tmp_dir/DWI_b0_reg_2_T1w_tmp.txt \
+$parent/${t1w_orig_name}_DTIsp.nii.gz
 
 # Remove tmp folder
 rm -r $tmp_dir
