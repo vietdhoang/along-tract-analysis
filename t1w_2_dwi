@@ -9,13 +9,15 @@
 # This script registers a T1-weighted image to a diffusion weighted image WHILE 
 # preserving the resolution of the T1w image.
 
-# b=0 DWI and the T1w image are required. We outline the steps for registration:
+# b=0 DWI,T1w (brain extracted), T1w (non-brain extracted) images are required. 
+# We outline the steps for registration:
 #   1. Register DWI_b0 to T1w using FLIRT; we obtain the matrix DWI_b0_reg_2_T1w
 #   2. Convert DWI_b0_reg_2_T1w matrix to MRtrix format
-#   3. Apply the inverse of the DWI_b0_reg_2_T1w matrix to obtain T1w_reg_2_DWI
+#   3. Apply the inverse of the DWI_b0_reg_2_T1w matrix to obtain T1w_DTIsp
+#   4. Apply the inverse of the DWI_b0_reg_2_T1w matrix to obtain T1w_orig_DTIsp
 
 # Example usage:
-# t1w_2_dwi -i PATH/to/T1w -r PATH/to/DWI_b0 
+# t1w_2_dwi -i PATH/to/T1w -o PATH/to/T1w_orig -r PATH/to/DWI_b0 
 
 ################################################################################
 
