@@ -60,7 +60,7 @@ $tmp_dir/DWI_brain_tmp_mask_dilate.nii.gz
 
 # Apply binary DWI brain mask to T1w image
 fslmaths $file_t1w -mas $tmp_dir/DWI_brain_tmp_mask_dilate.nii.gz \
-$parent/${t1w_name}_noskull_dil_${npass_val}.nii.gz
+$parent/${t1w_name}_noskull_dil${npass_val}.nii.gz
 
 # Remove tmp folder
 rm -r $tmp_dir
