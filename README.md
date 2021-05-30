@@ -1,4 +1,9 @@
-# Along-Tract-Analysis-Pipeline
-A project at the Rudko Lab (Montreal Neurological Institute)
+# Along Tract Analysis Pipeline
+### COMP 402D1 & D2: Honours Project in Computer Science and Biology
+Supervisor: Dr. David Rudko
 
-This project aims to generate fractional anisotropy (FA) values along streamlines generated from Anatomically Constrained Tractography (ACT). The majority of this project utilizes tools from MRtrix. 
+Multiple sclerosis (MS) is a chronic, neuroinflammatory disease that affects the central nervous system. It is an autoimmune condition that results in demyelination and axonal damage, disrupting the nervous system’s ability to transmit electrical signals and often causing progressive neurodegeneration. Despite being one of the most common neurological diseases among adults in Western countries (Filippi & Rocca, 2011) and with an estimated 250 000 to 350 000 people diagnosed with MS in the U.S.(Goldenberg, 2012), the mechanisms underlying MS pathology are not fully understood.
+
+Diffusion weighted imaging (DWI) is a form of MR imaging that is sensitive to the diffusion of water molecules in the brain. The diffusion of water is hindered by obstacles such as membranes. This allows for the extraction of useful information regarding tissue structure. In a healthy axon, the direction of diffusion is primarily along the length of the axon. In MS, however, axonal damage and demyelination can result in a reduction in diffusion along the axon length and radially outward from the centre of the axon (Inglese & Bester, 2010). By quantifying differences in diffusion MRI parameters between healthy and MS patients, it is possible to gain deeper insight into the pathology of MS. 
+
+In this project, we attempted to characterize the variability of along-tract MS pathology in a cohort of RRMS and SPMS subjects. Using probabilistic tractography to reconstruct the corticospinal tract (CST) we sampled diffusion metrics along the CST. Specifically, we computed fractional anisotropy (FA), mean diffusivity (MD), radial diffusivity (RD), and axial diffusivity (AD) at finely sampled vertex points along the CST.
