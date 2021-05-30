@@ -1,5 +1,5 @@
 # Along Tract Analysis Pipeline
-### COMP 402D1 & D2: Honours Project in Computer Science and Biology
+## COMP 402D1 & D2: Honours Project in Computer Science and Biology
 Supervisor: Dr. David Rudko
 
 Multiple sclerosis (MS) is a chronic, neuroinflammatory disease that affects the central nervous system. It is an autoimmune condition that results in demyelination and axonal damage, disrupting the nervous system’s ability to transmit electrical signals and often causing progressive neurodegeneration. Despite being one of the most common neurological diseases among adults in Western countries (Filippi & Rocca, 2011) and with an estimated 250 000 to 350 000 people diagnosed with MS in the U.S. (Goldenberg, 2012), the mechanisms underlying MS pathology are not fully understood.
