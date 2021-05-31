@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+# Viet Hoang
+# October 19, 2019
+
+###############################################################################
+# This script generates MD, AD, RD and FA maps from DWI.
+# Usage:
+# dwi_2_metrics PATH/to/bval_file PATH/to/bvec_file PATH/to/DWI
+###############################################################################
+
+# Parse input
+file_bval=$1
+file_bvec=$2
+file_dwi=$3               
+
+
+# Get the parent directory of the DWI and the name of the DWI
+parent="$(dirname "$file_dwi")"
+dwi_name="$(basename ${file_dwi%.nii*})"
+
+# Generate the metric maps. This command is from MRtrix.
+dwi2tensor $file_dwi - -fslgrad $file_bvec $file_bval | \
+tensor2metric - \
+-adc $parent/${dwi_name}_md.nii.gz \
+-ad $parent/${dwi_name}_ad.nii.gz \
+-rd $parent/${dwi_name}_rd.nii.gz \
+-fa $parent/${dwi_name}_fa.nii.gz
+

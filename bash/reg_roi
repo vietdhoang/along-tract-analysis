@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+
+# Viet Hoang
+# March 10, 2021
+
+#################################################################################
+
+# This script registers the brain stem and motor cortex masks to DWI space
+
+# b=0 DWI, brain.nii.gz (denoted T1w), and the label masks are required. 
+# We outline the steps for registration:
+#   1. Register DWI_b0 to brain.nii.gz using FLIRT; we obtain the matrix DWI_b0_reg_2_T1w
+#   2. Convert DWI_b0_reg_2_T1w matrix to MRtrix format
+#   3. Apply the inverse of the DWI_b0_reg_2_T1w matrix to obtain T1w_DTIsp
+#   4. Apply the inverse of the DWI_b0_reg_2_T1w matrix to obtain T1w_orig_DTIsp
+
+# Example usage:
+# reg_roi PATH/to/T1w PATH/to/b0 PATH/to/brainstem PATH/to/left_motor_cortex PATH/to/right_motor_cortex 
+
+################################################################################
+
+file_t1w=$1         # brain.nii.gz (brain.mgz that has been converted to NIFTI)
+file_b0=$2          # b0 image in DWI space  
+file_roi_bs=$3      # Brain stem mask
+file_roi_mc_lh=$4   # Left motor cortex mask
+file_roi_mc_rh=$5   # Right motor cortex mask
+
+# Determine the base directory for file output
+parent="$(dirname "$file_t1w")"
+
+# Determine the names of each of these files
+t1w_name="$(basename ${file_t1w%.nii*})"
+roi_bs_name="$(basename ${file_roi_bs%.nii*})"
+roi_mc_lh_name="$(basename ${file_roi_mc_lh%.nii*})"
+roi_mc_rh_name="$(basename ${file_roi_mc_rh%.nii*})"
+
+# Make a tmp folder that will be deleted at the end of the script
+mkdir -p $parent/${t1w_name}_T1w_2_DWI_tmp
+tmp_dir=$parent/${t1w_name}_T1w_2_DWI_tmp
+
+
+# 1. Register DWI_b0 to T1w using FLIRT; we obtain the matrix DWI_b0_reg_2_T1w 
+flirt -dof 6 -cost mutualinfo \
+-in $file_b0 -ref $file_t1w \
+-omat $tmp_dir/DWI_b0_reg_2_T1w_tmp.mat
+
+# 2. Convert DWI_b0_reg_2_T1w matrix to MRtrix format
+transformconvert -quiet \
+$tmp_dir/DWI_b0_reg_2_T1w_tmp.mat $file_b0 $file_t1w flirt_import \
+$tmp_dir/DWI_b0_reg_2_T1w_tmp.txt
+
+# 3. Apply the inverse of the DWI_b0_reg_2_T1w matrix to obtain T1w_DTIsp
+mrtransform -quiet $file_t1w \
+-inverse -linear $tmp_dir/DWI_b0_reg_2_T1w_tmp.txt \
+$parent/${t1w_name}_DTIsp.nii.gz
+
+# 4. Apply the inverse of the DWI_b0_reg_2_T1w matrix to label masks
+mrtransform -quiet $file_roi_bs \
+-inverse -linear $tmp_dir/DWI_b0_reg_2_T1w_tmp.txt \
+$parent/${roi_bs_name}_DTIsp.nii.gz
+
+mrtransform -quiet $file_roi_mc_lh \
+-inverse -linear $tmp_dir/DWI_b0_reg_2_T1w_tmp.txt \
+$parent/${roi_mc_lh_name}_DTIsp.nii.gz
+
+mrtransform -quiet $file_roi_mc_rh \
+-inverse -linear $tmp_dir/DWI_b0_reg_2_T1w_tmp.txt \
+$parent/${roi_mc_rh_name}_DTIsp.nii.gz
+
+# Remove tmp folder
+rm -r $tmp_dir
