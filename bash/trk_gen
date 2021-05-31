@@ -6,7 +6,7 @@
 ###############################################################################
 # This script reconstructs the corticospinal tract using probabalistic
 # tractography. For this script, MRtrix 3 was used.
-
+# Change 70
 # Usage
 # trk_gen -n subject_name -d dwi_img -l bval_file -c bvec_file -b b0_img -r dir_roi
 ###############################################################################
